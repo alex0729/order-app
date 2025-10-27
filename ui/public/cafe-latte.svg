@@ -1,0 +1,22 @@
+<svg width="200" height="150" viewBox="0 0 200 150" xmlns="http://www.w3.org/2000/svg">
+  <!-- 컵 배경 -->
+  <rect x="50" y="40" width="100" height="80" fill="#8B4513" stroke="#654321" stroke-width="2" rx="10"/>
+  
+  <!-- 라떼 액체 (우유와 커피 층) -->
+  <rect x="55" y="45" width="90" height="70" fill="#4A2C2A" rx="5"/>
+  <rect x="55" y="45" width="90" height="25" fill="#F5F5DC" rx="5"/>
+  
+  <!-- 라떼 아트 (하트 모양) -->
+  <path d="M 90 55 Q 85 50 80 55 Q 85 60 90 55 Q 95 60 100 55 Q 95 50 90 55" fill="#8B4513" opacity="0.6"/>
+  
+  <!-- 컵 손잡이 -->
+  <path d="M 150 60 Q 160 60 160 80 Q 160 100 150 100" fill="none" stroke="#654321" stroke-width="3"/>
+  
+  <!-- 부드러운 증기 -->
+  <path d="M 90 30 Q 95 25 100 30 Q 105 25 110 30" fill="none" stroke="#E6E6FA" stroke-width="2" opacity="0.7"/>
+  <path d="M 100 30 Q 105 25 110 30 Q 115 25 120 30" fill="none" stroke="#E6E6FA" stroke-width="2" opacity="0.7"/>
+  
+  <!-- 우유 표시 -->
+  <circle cx="170" cy="50" r="15" fill="#F5F5DC" opacity="0.3"/>
+  <text x="170" y="55" text-anchor="middle" font-size="10" fill="#8B4513" font-weight="bold">LATTE</text>
+</svg>
