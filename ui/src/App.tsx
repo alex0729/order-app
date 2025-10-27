@@ -64,6 +64,22 @@ function App() {
     ));
   };
 
+  const startProduction = (orderId: string) => {
+    setOrders(orders.map(order =>
+      order.id === orderId
+        ? { ...order, status: 'in_production' }
+        : order
+    ));
+  };
+
+  const completeOrder = (orderId: string) => {
+    setOrders(orders.map(order =>
+      order.id === orderId
+        ? { ...order, status: 'completed' }
+        : order
+    ));
+  };
+
   const updateInventory = (item: string, change: number) => {
     setInventory(prev => ({
       ...prev,
@@ -167,6 +183,8 @@ function App() {
             orders={orders}
             inventory={inventory}
             onReceiveOrder={receiveOrder}
+            onStartProduction={startProduction}
+            onCompleteOrder={completeOrder}
             onUpdateInventory={updateInventory}
           />
         )}
@@ -176,16 +194,25 @@ function App() {
 }
 
 // AdminPage 컴포넌트
-function AdminPage({ orders, inventory, onReceiveOrder, onUpdateInventory }: {
+function AdminPage({ orders, inventory, onReceiveOrder, onStartProduction, onCompleteOrder, onUpdateInventory }: {
   orders: Array<{id: string, timestamp: string, items: any[], totalAmount: number, status: string}>;
   inventory: {[key: string]: number};
   onReceiveOrder: (orderId: string) => void;
+  onStartProduction: (orderId: string) => void;
+  onCompleteOrder: (orderId: string) => void;
   onUpdateInventory: (item: string, change: number) => void;
 }) {
   const totalOrders = orders.length;
   const receivedOrders = orders.filter(order => order.status === 'received').length;
   const inProductionOrders = orders.filter(order => order.status === 'in_production').length;
   const completedOrders = orders.filter(order => order.status === 'completed').length;
+
+  // 재고 상태를 반환하는 함수
+  const getStockStatus = (count: number) => {
+    if (count === 0) return { text: '품절', color: '#ef4444' };
+    if (count < 5) return { text: '주의', color: '#f59e0b' };
+    return { text: '정상', color: '#10b981' };
+  };
 
   return (
     <div className="admin-page">
@@ -217,7 +244,12 @@ function AdminPage({ orders, inventory, onReceiveOrder, onUpdateInventory }: {
           <div className="inventory-card">
             <h3>아메리카노 (ICE)</h3>
             <div className="stock-control">
-              <span>{inventory['아메리카노(ICE)']}개</span>
+              <div className="stock-info">
+                <span className="stock-count">{inventory['아메리카노(ICE)']}개</span>
+                <span className="stock-status" style={{ color: getStockStatus(inventory['아메리카노(ICE)']).color }}>
+                  {getStockStatus(inventory['아메리카노(ICE)']).text}
+                </span>
+              </div>
               <div className="stock-buttons">
                 <button onClick={() => onUpdateInventory('아메리카노(ICE)', 1)}>+</button>
                 <button onClick={() => onUpdateInventory('아메리카노(ICE)', -1)}>-</button>
@@ -227,7 +259,12 @@ function AdminPage({ orders, inventory, onReceiveOrder, onUpdateInventory }: {
           <div className="inventory-card">
             <h3>아메리카노 (HOT)</h3>
             <div className="stock-control">
-              <span>{inventory['아메리카노(HOT)']}개</span>
+              <div className="stock-info">
+                <span className="stock-count">{inventory['아메리카노(HOT)']}개</span>
+                <span className="stock-status" style={{ color: getStockStatus(inventory['아메리카노(HOT)']).color }}>
+                  {getStockStatus(inventory['아메리카노(HOT)']).text}
+                </span>
+              </div>
               <div className="stock-buttons">
                 <button onClick={() => onUpdateInventory('아메리카노(HOT)', 1)}>+</button>
                 <button onClick={() => onUpdateInventory('아메리카노(HOT)', -1)}>-</button>
@@ -237,7 +274,12 @@ function AdminPage({ orders, inventory, onReceiveOrder, onUpdateInventory }: {
           <div className="inventory-card">
             <h3>카페라떼</h3>
             <div className="stock-control">
-              <span>{inventory['카페라떼']}개</span>
+              <div className="stock-info">
+                <span className="stock-count">{inventory['카페라떼']}개</span>
+                <span className="stock-status" style={{ color: getStockStatus(inventory['카페라떼']).color }}>
+                  {getStockStatus(inventory['카페라떼']).text}
+                </span>
+              </div>
               <div className="stock-buttons">
                 <button onClick={() => onUpdateInventory('카페라떼', 1)}>+</button>
                 <button onClick={() => onUpdateInventory('카페라떼', -1)}>-</button>
@@ -260,15 +302,49 @@ function AdminPage({ orders, inventory, onReceiveOrder, onUpdateInventory }: {
                 <span className="order-price">{order.totalAmount.toLocaleString()}원</span>
               </div>
               <button 
-                className="receive-order-button"
+                className="order-action-button"
                 onClick={() => onReceiveOrder(order.id)}
               >
                 주문 접수
               </button>
             </div>
           ))}
-          {orders.filter(order => order.status === 'pending').length === 0 && (
-            <p>대기 중인 주문이 없습니다.</p>
+          {orders.filter(order => order.status === 'received').map((order) => (
+            <div key={order.id} className="order-item">
+              <div className="order-info">
+                <span className="order-time">{order.timestamp}</span>
+                <span className="order-items">
+                  {order.items.map((item: any) => `${item.name} x ${item.quantity}`).join(', ')}
+                </span>
+                <span className="order-price">{order.totalAmount.toLocaleString()}원</span>
+              </div>
+              <button 
+                className="order-action-button"
+                onClick={() => onStartProduction(order.id)}
+              >
+                제조 시작
+              </button>
+            </div>
+          ))}
+          {orders.filter(order => order.status === 'in_production').map((order) => (
+            <div key={order.id} className="order-item">
+              <div className="order-info">
+                <span className="order-time">{order.timestamp}</span>
+                <span className="order-items">
+                  {order.items.map((item: any) => `${item.name} x ${item.quantity}`).join(', ')}
+                </span>
+                <span className="order-price">{order.totalAmount.toLocaleString()}원</span>
+              </div>
+              <button 
+                className="order-action-button"
+                onClick={() => onCompleteOrder(order.id)}
+              >
+                제조 완료
+              </button>
+            </div>
+          ))}
+          {orders.filter(order => ['pending', 'received', 'in_production'].includes(order.status)).length === 0 && (
+            <p>진행 중인 주문이 없습니다.</p>
           )}
         </div>
       </div>

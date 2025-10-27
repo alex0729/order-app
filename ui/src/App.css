@@ -12,6 +12,7 @@
   border-bottom: 1px solid #1d4ed8;
   padding: 1rem 0;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  width: 100%;
 }
 
 .header-content {
@@ -329,6 +330,7 @@
   display: flex;
   flex-direction: column;
   gap: 2rem;
+  width: 100%;
 }
 
 .admin-dashboard h2,
@@ -336,12 +338,20 @@
 .orders-section h2 {
   margin-bottom: 1rem;
   color: #333;
+  text-align: center;
+}
+
+.admin-dashboard,
+.inventory-section,
+.orders-section {
+  width: 100%;
 }
 
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(4, 1fr);
   gap: 1rem;
+  width: 100%;
 }
 
 .stat-card {
@@ -368,8 +378,9 @@
 
 .inventory-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
   gap: 1rem;
+  width: 100%;
 }
 
 .inventory-card {
@@ -388,6 +399,23 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.stock-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.stock-count {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #333;
+}
+
+.stock-status {
+  font-size: 0.9rem;
+  font-weight: 600;
 }
 
 .stock-buttons {
@@ -445,16 +473,19 @@
   color: #2563eb;
 }
 
-.receive-order-button {
+.receive-order-button,
+.order-action-button {
   padding: 0.5rem 1rem;
   background-color: #2563eb;
   color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
+  font-weight: 500;
 }
 
-.receive-order-button:hover {
+.receive-order-button:hover,
+.order-action-button:hover {
   background-color: #1d4ed8;
 }
 
@@ -501,6 +532,16 @@
   .item-price {
     text-align: left;
     min-width: auto;
+  }
+}
+
+@media (max-width: 1200px) {
+  .stats-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  
+  .inventory-grid {
+    grid-template-columns: repeat(3, 1fr);
   }
 }
 
