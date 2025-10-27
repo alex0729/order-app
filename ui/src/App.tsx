@@ -2,10 +2,34 @@ import React, { useState } from 'react';
 import Header from './components/Header';
 import './App.css';
 
+interface CartItem {
+  id: string;
+  name: string;
+  price: number;
+  quantity: number;
+  options: string[];
+}
+
+interface OrderItem {
+  id: string;
+  name: string;
+  price: number;
+  quantity: number;
+  options: string[];
+}
+
+interface Order {
+  id: string;
+  timestamp: string;
+  items: OrderItem[];
+  totalAmount: number;
+  status: 'pending' | 'received' | 'in_production' | 'completed';
+}
+
 function App() {
   const [currentPage, setCurrentPage] = useState<'order' | 'admin'>('order');
-  const [cartItems, setCartItems] = useState<Array<{id: string, name: string, price: number, quantity: number, options: string[]}>>([]);
-  const [orders, setOrders] = useState<Array<{id: string, timestamp: string, items: any[], totalAmount: number, status: string}>>([]);
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [inventory, setInventory] = useState<{[key: string]: number}>({
     '아메리카노(ICE)': 10,
     '아메리카노(HOT)': 10,
@@ -27,7 +51,7 @@ function App() {
     if (existingItem) {
       setCartItems(cartItems.map(item =>
         `${item.id}-${item.options.join(',')}` === cartKey 
-          ? { ...item, quantity: item.quantity + 1, price: totalPrice } 
+          ? { ...item, quantity: item.quantity + 1 } 
           : item
       ));
     } else {
@@ -43,12 +67,12 @@ function App() {
     if (cartItems.length === 0) return;
     
     const totalAmount = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    const newOrder = {
+    const newOrder: Order = {
       id: Date.now().toString(),
       timestamp: new Date().toLocaleString('ko-KR'),
       items: [...cartItems],
       totalAmount,
-      status: 'pending'
+      status: 'pending' as const
     };
     
     setOrders([...orders, newOrder]);
@@ -95,9 +119,11 @@ function App() {
       
       <main className="main-content">
         {currentPage === 'order' ? (
-          <div>
-            <h1>주문 페이지</h1>
-            <p>간단한 주문 페이지입니다.</p>
+          <div className="order-page">
+            <div className="page-header">
+              <h1>주문 페이지</h1>
+              <p className="page-description">원하시는 메뉴를 선택해주세요</p>
+            </div>
             <div className="products-grid">
               <ProductCard 
                 id="1"
@@ -151,15 +177,7 @@ function App() {
                             </div>
                             <button 
                               onClick={() => removeFromCart(index)}
-                              style={{
-                                background: '#ff4444',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '4px',
-                                padding: '0.5rem',
-                                cursor: 'pointer',
-                                fontSize: '0.9rem'
-                              }}
+                              className="remove-button"
                             >
                               삭제
                             </button>
@@ -193,9 +211,35 @@ function App() {
   );
 }
 
+// 주문 리스트 렌더링 함수
+function renderOrderList(
+  orders: Order[], 
+  status: Order['status'], 
+  buttonText: string, 
+  onClick: (orderId: string) => void
+) {
+  return orders.filter(order => order.status === status).map((order) => (
+    <div key={order.id} className="order-item">
+      <div className="order-info">
+        <span className="order-time">{order.timestamp}</span>
+        <span className="order-items">
+          {order.items.map(item => `${item.name} x ${item.quantity}`).join(', ')}
+        </span>
+        <span className="order-price">{order.totalAmount.toLocaleString()}원</span>
+      </div>
+      <button 
+        className="order-action-button"
+        onClick={() => onClick(order.id)}
+      >
+        {buttonText}
+      </button>
+    </div>
+  ));
+}
+
 // AdminPage 컴포넌트
 function AdminPage({ orders, inventory, onReceiveOrder, onStartProduction, onCompleteOrder, onUpdateInventory }: {
-  orders: Array<{id: string, timestamp: string, items: any[], totalAmount: number, status: string}>;
+  orders: Order[];
   inventory: {[key: string]: number};
   onReceiveOrder: (orderId: string) => void;
   onStartProduction: (orderId: string) => void;
@@ -292,59 +336,11 @@ function AdminPage({ orders, inventory, onReceiveOrder, onStartProduction, onCom
       <div className="orders-section">
         <h2>주문 현황</h2>
         <div className="orders-list">
-          {orders.filter(order => order.status === 'pending').map((order) => (
-            <div key={order.id} className="order-item">
-              <div className="order-info">
-                <span className="order-time">{order.timestamp}</span>
-                <span className="order-items">
-                  {order.items.map((item: any) => `${item.name} x ${item.quantity}`).join(', ')}
-                </span>
-                <span className="order-price">{order.totalAmount.toLocaleString()}원</span>
-              </div>
-              <button 
-                className="order-action-button"
-                onClick={() => onReceiveOrder(order.id)}
-              >
-                주문 접수
-              </button>
-            </div>
-          ))}
-          {orders.filter(order => order.status === 'received').map((order) => (
-            <div key={order.id} className="order-item">
-              <div className="order-info">
-                <span className="order-time">{order.timestamp}</span>
-                <span className="order-items">
-                  {order.items.map((item: any) => `${item.name} x ${item.quantity}`).join(', ')}
-                </span>
-                <span className="order-price">{order.totalAmount.toLocaleString()}원</span>
-              </div>
-              <button 
-                className="order-action-button"
-                onClick={() => onStartProduction(order.id)}
-              >
-                제조 시작
-              </button>
-            </div>
-          ))}
-          {orders.filter(order => order.status === 'in_production').map((order) => (
-            <div key={order.id} className="order-item">
-              <div className="order-info">
-                <span className="order-time">{order.timestamp}</span>
-                <span className="order-items">
-                  {order.items.map((item: any) => `${item.name} x ${item.quantity}`).join(', ')}
-                </span>
-                <span className="order-price">{order.totalAmount.toLocaleString()}원</span>
-              </div>
-              <button 
-                className="order-action-button"
-                onClick={() => onCompleteOrder(order.id)}
-              >
-                제조 완료
-              </button>
-            </div>
-          ))}
+          {renderOrderList(orders, 'pending', '주문 접수', onReceiveOrder)}
+          {renderOrderList(orders, 'received', '제조 시작', onStartProduction)}
+          {renderOrderList(orders, 'in_production', '제조 완료', onCompleteOrder)}
           {orders.filter(order => ['pending', 'received', 'in_production'].includes(order.status)).length === 0 && (
-            <p>진행 중인 주문이 없습니다.</p>
+            <p className="no-orders">진행 중인 주문이 없습니다.</p>
           )}
         </div>
       </div>
