@@ -59,11 +59,38 @@ const insertSampleData = async () => {
       ];
 
       for (const menu of menus) {
-        await query(
+        const menuResult = await query(
           `INSERT INTO menus (name, description, price, image_url, stock_quantity, category) 
-           VALUES ($1, $2, $3, $4, $5, $6)`,
+           VALUES ($1, $2, $3, $4, $5, $6)
+           RETURNING id`,
           [menu.name, menu.description, menu.price, menu.image_url, menu.stock_quantity, menu.category]
         );
+        
+        const menuId = menuResult.rows[0].id;
+
+        // 기본 옵션 추가 (샷 추가, 시럽 추가)
+        const defaultOptions = [
+          {
+            name: '샷 추가',
+            price_modifier: 500,
+            option_type: 'extra_shot',
+            is_required: false
+          },
+          {
+            name: '시럽 추가',
+            price_modifier: 0,
+            option_type: 'syrup',
+            is_required: false
+          }
+        ];
+
+        for (const option of defaultOptions) {
+          await query(
+            `INSERT INTO options (name, price_modifier, menu_id, option_type, is_required)
+             VALUES ($1, $2, $3, $4, $5)`,
+            [option.name, option.price_modifier, menuId, option.option_type, option.is_required]
+          );
+        }
       }
 
       console.log('✅ Sample data inserted');

@@ -1,4 +1,5 @@
 const { Pool } = require('pg');
+require('dotenv').config();
 
 const createDatabase = async () => {
   // 먼저 postgres 데이터베이스에 연결

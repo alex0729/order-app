@@ -7,7 +7,7 @@ const { query, pool } = require('./config/database');
 const initDb = require('./config/initDb');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 
 // Middleware
 app.use(cors());
@@ -25,30 +25,8 @@ app.get('/health', (req, res) => {
 });
 
 // Routes
-// 메뉴 관련 라우트
-app.get('/api/menus', (req, res) => {
-  res.status(200).json({
-    success: true,
-    data: [],
-    message: '메뉴 목록 조회 (구현 필요)'
-  });
-});
-
-// 주문 관련 라우트
-app.post('/api/orders', (req, res) => {
-  res.status(200).json({
-    success: true,
-    message: '주문 생성 (구현 필요)'
-  });
-});
-
-app.get('/api/orders', (req, res) => {
-  res.status(200).json({
-    success: true,
-    data: [],
-    message: '주문 목록 조회 (구현 필요)'
-  });
-});
+const routes = require('./routes');
+app.use('/api', routes);
 
 // 에러 처리 미들웨어
 app.use((err, req, res, next) => {
@@ -76,8 +54,14 @@ app.use((req, res) => {
 // Server start
 const startServer = async () => {
   try {
-    // 데이터베이스 초기화
-    await initDb();
+    // 데이터베이스 초기화 (에러가 발생해도 서버는 시작)
+    try {
+      await initDb();
+      console.log('✅ Database initialized successfully');
+    } catch (dbError) {
+      console.error('⚠️ Database initialization failed:', dbError.message);
+      console.log('⚠️ Server will start without database. Please check your database connection.');
+    }
 
     // 서버 시작
     app.listen(PORT, () => {

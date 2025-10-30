@@ -1,10 +1,10 @@
 import React from 'react';
-import { CartItem } from '../types';
+import type { CartItem } from '../types';
 
 interface CartProps {
   items: CartItem[];
   onRemoveItem: (productId: string) => void;
-  onUpdateQuantity: (productId: string, quantity: number) => void;
+  onUpdateQuantity?: (productId: string, quantity: number) => void;
   onPlaceOrder: () => void;
 }
 
@@ -19,12 +19,12 @@ const Cart: React.FC<CartProps> = ({ items, onRemoveItem, onUpdateQuantity, onPl
         {items.length === 0 ? (
           <p className="empty-cart">장바구니가 비어있습니다.</p>
         ) : (
-          items.map((item) => (
-            <div key={item.productId} className="cart-item">
+          items.map((item, index) => (
+            <div key={`${item.productId}-${index}`} className="cart-item">
               <div className="item-info">
                 <span className="item-name">
                   {item.productName}
-                  {item.selectedOptions.length > 0 && (
+                  {item.selectedOptions && item.selectedOptions.length > 0 && (
                     <span className="item-options">
                       ({item.selectedOptions.map(opt => opt.name).join(', ')})
                     </span>
@@ -33,6 +33,12 @@ const Cart: React.FC<CartProps> = ({ items, onRemoveItem, onUpdateQuantity, onPl
                 <span className="item-quantity">X {item.quantity}</span>
               </div>
               <div className="item-price">{item.totalPrice.toLocaleString()}원</div>
+              <button 
+                className="remove-button"
+                onClick={() => onRemoveItem(item.productId)}
+              >
+                삭제
+              </button>
             </div>
           ))
         )}

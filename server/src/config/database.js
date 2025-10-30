@@ -1,4 +1,5 @@
 const { Pool } = require('pg');
+require('dotenv').config();
 
 // 환경 변수 디버깅
 console.log('🔍 Database connection config:', {
@@ -27,7 +28,8 @@ pool.on('connect', () => {
 
 pool.on('error', (err) => {
   console.error('❌ Unexpected error on idle client', err);
-  process.exit(-1);
+  console.error('⚠️  Database connection error. Server will continue but database operations may fail.');
+  // process.exit를 제거하여 서버가 계속 실행되도록 함
 });
 
 // 데이터베이스 쿼리 헬퍼 함수
