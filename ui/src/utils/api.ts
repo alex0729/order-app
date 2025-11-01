@@ -10,9 +10,9 @@ const getApiBaseUrl = () => {
     return 'http://localhost:3001/api';
   }
   
-  // 프로덕션 환경에서는 에러 발생
-  console.error('VITE_API_BASE_URL 환경 변수가 설정되지 않았습니다.');
-  throw new Error('API URL이 설정되지 않았습니다. 환경 변수를 확인해주세요.');
+  // 프로덕션 환경에서도 기본값 제공 (나중에 에러 처리)
+  console.warn('VITE_API_BASE_URL 환경 변수가 설정되지 않았습니다. 기본값을 사용합니다.');
+  return 'http://localhost:3001/api'; // 임시 기본값 (에러 처리는 API 호출 시점에)
 };
 
 const API_BASE_URL = getApiBaseUrl();
