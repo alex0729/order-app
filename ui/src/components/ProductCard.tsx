@@ -22,43 +22,99 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
     setSelectedOptions([]); // 옵션 초기화
   };
 
-  // 이미지 경로 결정
+  // 이미지 경로 결정 및 정규화
   const getImagePath = () => {
     if (product.imageUrl) {
-      return product.imageUrl;
+      // 이미지 경로 정규화
+      let imagePath = product.imageUrl;
+      
+      // 상대 경로를 절대 경로로 변환
+      if (!imagePath.startsWith('http') && !imagePath.startsWith('/')) {
+        imagePath = '/' + imagePath;
+      }
+      
+      // 데이터베이스 경로를 실제 파일 경로로 매핑
+      const imageMap: { [key: string]: string } = {
+        '/images/americano.jpg': '/images/americano-hot.jpg',
+        '/images/americano-hot.jpg': '/images/americano-hot.jpg',
+        '/images/americano-ice.jpg': '/images/americano-ice.jpg',
+        '/images/latte.jpg': '/images/caffe-latte.jpg',
+        '/images/caffe-latte.jpg': '/images/caffe-latte.jpg',
+        '/images/cappuccino.jpg': '/images/caffe-latte.jpg', // 카푸치노 이미지가 없으므로 라떼 이미지 사용
+      };
+      
+      // 매핑된 경로가 있으면 사용
+      if (imageMap[imagePath]) {
+        return imageMap[imagePath];
+      }
+      
+      return imagePath;
     }
-    // 기본 이미지 경로
+    
+    // 기본 이미지 경로 (이미지 URL이 없는 경우)
     const name = product.name.toLowerCase();
     if (name.includes('ice') || name.includes('아이스')) {
       return '/ice-americano.svg';
     } else if (name.includes('hot') || name.includes('핫')) {
       return '/hot-americano.svg';
-    } else if (name.includes('라떼') || name.includes('latte')) {
+    } else if (name.includes('라떼') || name.includes('latte') || name.includes('카푸치노') || name.includes('cappuccino')) {
       return '/cafe-latte.svg';
     }
     return '/ice-americano.svg';
   };
 
   const [imageError, setImageError] = React.useState(false);
+  const [imageLoading, setImageLoading] = React.useState(true);
+  const imagePath = getImagePath();
   
   const handleImageError = () => {
-    console.warn(`이미지 로드 실패: ${getImagePath()}`);
+    console.warn(`이미지 로드 실패: ${imagePath}`);
     setImageError(true);
+    setImageLoading(false);
+  };
+  
+  const handleImageLoad = () => {
+    setImageLoading(false);
   };
 
   return (
     <div className="product-card">
       <div className="product-image">
         {!imageError ? (
-          <img 
-            src={getImagePath()} 
-            alt={product.name} 
-            className="coffee-image"
-            onError={handleImageError}
-            loading="lazy"
-          />
+          <>
+            {imageLoading && (
+              <div style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center', 
+                height: '100%', 
+                background: '#f0f0f0',
+                color: '#999',
+                fontSize: '0.9rem'
+              }}>
+                로딩 중...
+              </div>
+            )}
+            <img 
+              src={imagePath} 
+              alt={product.name} 
+              className="coffee-image"
+              onError={handleImageError}
+              onLoad={handleImageLoad}
+              loading="lazy"
+              style={{ display: imageLoading ? 'none' : 'block' }}
+            />
+          </>
         ) : (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#999' }}>
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center', 
+            height: '100%', 
+            background: '#f0f0f0',
+            color: '#999',
+            fontSize: '0.9rem'
+          }}>
             이미지 없음
           </div>
         )}

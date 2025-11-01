@@ -128,12 +128,24 @@ async function request<T>(
   const url = `${API_BASE_URL}${endpoint}`;
   console.log('📡 API 요청:', url);
   
+  // 타임아웃 설정 (기존 signal이 없을 때만)
+  let timeoutController: AbortController | null = null;
+  if (!options.signal) {
+    timeoutController = new AbortController();
+    setTimeout(() => {
+      if (timeoutController) {
+        timeoutController.abort();
+      }
+    }, 15000); // 15초 타임아웃 (Render Free tier 고려)
+  }
+  
   const config: RequestInit = {
     headers: {
       'Content-Type': 'application/json',
       ...options.headers,
     },
     ...options,
+    signal: options.signal || timeoutController?.signal,
   };
 
   try {
@@ -180,6 +192,11 @@ async function request<T>(
     // 네트워크 에러 처리
     if (error instanceof TypeError && error.message.includes('fetch')) {
       throw new Error('네트워크 연결에 실패했습니다. 인터넷 연결을 확인해주세요.');
+    }
+    
+    // 네트워크 타임아웃 에러
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new Error('요청 시간이 초과되었습니다. 네트워크 연결을 확인해주세요.');
     }
     
     // CORS 에러 처리
