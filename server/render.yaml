@@ -1,0 +1,39 @@
+services:
+  - type: web
+    name: order-app-backend
+    env: node
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      # PostgreSQL 연결 정보는 Render 대시보드에서 환경 변수로 직접 설정하세요
+      # - key: DB_HOST
+      #   fromDatabase:
+      #     name: coffee-order-db
+      #     property: host
+      # - key: DB_PORT
+      #   fromDatabase:
+      #     name: coffee-order-db
+      #     property: port
+      # - key: DB_NAME
+      #   fromDatabase:
+      #     name: coffee-order-db
+      #     property: database
+      # - key: DB_USER
+      #   fromDatabase:
+      #     name: coffee-order-db
+      #     property: user
+      # - key: DB_PASSWORD
+      #   fromDatabase:
+      #     name: coffee-order-db
+      #     property: password
+
+databases:
+  - name: coffee-order-db
+    databaseName: coffee_order_db
+    user: coffee_order_user
+    plan: free
+
