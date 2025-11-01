@@ -574,10 +574,14 @@
   }
   
   .header-content {
+    width: 100%;
+    margin: 0;
     padding: 0 1rem;
   }
   
   .main-content {
+    width: 100%;
+    margin: 0;
     padding: 1rem;
   }
   
@@ -633,5 +637,29 @@
   
   .inventory-grid {
     grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* 작은 모바일 화면 (480px 이하) */
+@media (max-width: 480px) {
+  .header-content {
+    padding: 0 0.75rem;
+  }
+  
+  .main-content {
+    padding: 0.75rem;
+  }
+  
+  .product-card {
+    padding: 1rem;
+  }
+  
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+  
+  .inventory-grid {
+    grid-template-columns: 1fr;
   }
 }
