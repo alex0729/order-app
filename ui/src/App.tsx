@@ -211,7 +211,23 @@ function App() {
         {currentPage === 'order' ? (
           <div className="order-page">
             {loading && <div className="loading">메뉴를 불러오는 중...</div>}
-            {error && <div className="error">오류: {error}</div>}
+            {error && (
+              <div className="error" style={{ 
+                padding: '1rem', 
+                background: '#fee', 
+                color: '#c33', 
+                borderRadius: '8px',
+                margin: '1rem 0',
+                textAlign: 'center'
+              }}>
+                <strong>오류 발생:</strong><br />
+                {error}
+                <br />
+                <small style={{ fontSize: '0.9rem', marginTop: '0.5rem', display: 'block' }}>
+                  API URL: {import.meta.env.VITE_API_BASE_URL || '설정되지 않음'}
+                </small>
+              </div>
+            )}
             
             {!loading && !error && (
               <>

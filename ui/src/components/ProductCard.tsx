@@ -39,10 +39,29 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
     return '/ice-americano.svg';
   };
 
+  const [imageError, setImageError] = React.useState(false);
+  
+  const handleImageError = () => {
+    console.warn(`이미지 로드 실패: ${getImagePath()}`);
+    setImageError(true);
+  };
+
   return (
     <div className="product-card">
       <div className="product-image">
-        <img src={getImagePath()} alt={product.name} className="coffee-image" />
+        {!imageError ? (
+          <img 
+            src={getImagePath()} 
+            alt={product.name} 
+            className="coffee-image"
+            onError={handleImageError}
+            loading="lazy"
+          />
+        ) : (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#999' }}>
+            이미지 없음
+          </div>
+        )}
       </div>
       <div className="product-info">
         <h3 className="product-name">{product.name}</h3>

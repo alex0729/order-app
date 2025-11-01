@@ -1,4 +1,21 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
+// API Base URL 설정
+const getApiBaseUrl = () => {
+  const envUrl = import.meta.env.VITE_API_BASE_URL;
+  if (envUrl) {
+    return envUrl;
+  }
+  
+  // 개발 환경 기본값
+  if (import.meta.env.DEV) {
+    return 'http://localhost:3001/api';
+  }
+  
+  // 프로덕션 환경에서는 에러 발생
+  console.error('VITE_API_BASE_URL 환경 변수가 설정되지 않았습니다.');
+  throw new Error('API URL이 설정되지 않았습니다. 환경 변수를 확인해주세요.');
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 // API 응답 타입
 interface ApiResponse<T> {
@@ -130,10 +147,29 @@ async function request<T>(
     return data.data as T;
   } catch (error) {
     console.error('API 요청 오류:', error);
+    console.error('요청 URL:', url);
+    
+    // 네트워크 에러 처리
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      throw new Error('네트워크 연결에 실패했습니다. 인터넷 연결을 확인해주세요.');
+    }
+    
+    // CORS 에러 처리
+    if (error instanceof TypeError && (error.message.includes('CORS') || error.message.includes('Failed to fetch'))) {
+      throw new Error('서버 연결에 실패했습니다. 잠시 후 다시 시도해주세요.');
+    }
+    
+    // JSON 파싱 에러
     if (error instanceof SyntaxError && error.message.includes('JSON')) {
       throw new Error('서버에서 올바른 JSON 응답을 받지 못했습니다. 백엔드 서버가 실행 중인지 확인해주세요.');
     }
-    throw error;
+    
+    // 기타 에러
+    if (error instanceof Error) {
+      throw error;
+    }
+    
+    throw new Error('알 수 없는 오류가 발생했습니다.');
   }
 }
 
