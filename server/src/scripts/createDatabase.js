@@ -5,7 +5,7 @@ const createDatabase = async () => {
   // 먼저 postgres 데이터베이스에 연결
   const adminPool = new Pool({
     host: process.env.DB_HOST || 'localhost',
-    port: process.env.DB_PORT || 5432,
+    port: parseInt(process.env.DB_PORT) || 5432,
     database: 'postgres', // 기본 postgres 데이터베이스
     user: process.env.DB_USER || 'postgres',
     password: process.env.DB_PASSWORD || '',

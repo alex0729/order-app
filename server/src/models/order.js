@@ -150,11 +150,7 @@ const createOrder = async (orderData) => {
 
       orderItems.push(itemResult.rows[0]);
 
-      // 재고 차감
-      await client.query(
-        'UPDATE menus SET stock_quantity = stock_quantity - $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
-        [item.quantity, item.menu_id]
-      );
+      // 재고 차감은 제조 완료 시점에 수행됩니다.
     }
 
     await client.query('COMMIT');
@@ -261,14 +257,19 @@ const getOrderById = async (orderId) => {
  * 주문 상태 변경
  */
 const updateOrderStatus = async (orderId, status) => {
+  const client = await require('../config/database').pool.connect();
+  
   try {
+    await client.query('BEGIN');
+
     // 유효한 상태인지 확인
     const validStatuses = ['접수', '제조중', '완료', '취소'];
     if (!validStatuses.includes(status)) {
       throw new Error(`Invalid status: ${status}`);
     }
 
-    const result = await query(
+    // 주문 상태 업데이트
+    const result = await client.query(
       `UPDATE orders
        SET status = $1, updated_at = CURRENT_TIMESTAMP
        WHERE id = $2
@@ -277,13 +278,58 @@ const updateOrderStatus = async (orderId, status) => {
     );
 
     if (result.rows.length === 0) {
+      await client.query('ROLLBACK');
       return null;
     }
 
+    // 상태가 '완료'로 변경되는 경우, 주문 항목들의 재고를 차감
+    if (status === '완료') {
+      // 주문 항목 조회
+      const itemsResult = await client.query(
+        `SELECT menu_id, quantity
+         FROM order_items
+         WHERE order_id = $1`,
+        [orderId]
+      );
+
+      // 각 주문 항목의 재고 차감
+      for (const item of itemsResult.rows) {
+        // 재고 확인
+        const stockResult = await client.query(
+          'SELECT stock_quantity FROM menus WHERE id = $1',
+          [item.menu_id]
+        );
+
+        if (stockResult.rows.length === 0) {
+          throw new Error(`Menu not found: ${item.menu_id}`);
+        }
+
+        const currentStock = parseInt(stockResult.rows[0].stock_quantity);
+        
+        // 재고가 부족한 경우 오류 발생 (제조 완료는 재고가 있어야 가능)
+        if (currentStock < item.quantity) {
+          throw new Error(`Insufficient stock for menu ${item.menu_id}. Available: ${currentStock}, Required: ${item.quantity}`);
+        }
+
+        // 재고 차감
+        await client.query(
+          'UPDATE menus SET stock_quantity = stock_quantity - $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
+          [item.quantity, item.menu_id]
+        );
+      }
+
+      console.log(`✅ Stock deducted for order ${orderId} (${itemsResult.rows.length} items)`);
+    }
+
+    await client.query('COMMIT');
+
     return result.rows[0];
   } catch (error) {
+    await client.query('ROLLBACK');
     console.error('Error in updateOrderStatus:', error);
     throw error;
+  } finally {
+    client.release();
   }
 };
 

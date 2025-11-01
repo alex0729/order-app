@@ -122,17 +122,21 @@ function App() {
 
     // 장바구니 아이템 생성
     const cartKey = `${product.id}-${selectedOptions.map(o => o.name).sort().join(',')}`;
-    const existingItem = cartItems.find(
+    const existingIndex = cartItems.findIndex(
       item => `${item.productId}-${item.selectedOptions.map(o => o.name).sort().join(',')}` === cartKey
     );
     
-    if (existingItem) {
+    if (existingIndex !== -1) {
       // 기존 아이템의 수량 증가
-      setCartItems(cartItems.map(item =>
-        `${item.productId}-${item.selectedOptions.map(o => o.name).sort().join(',')}` === cartKey
-          ? { ...item, quantity: item.quantity + 1, totalPrice: (item.totalPrice / item.quantity) * (item.quantity + 1) }
-          : item
-      ));
+      const item = cartItems[existingIndex];
+      const unitPrice = item.totalPrice / item.quantity;
+      const updated = [...cartItems];
+      updated[existingIndex] = {
+        ...item,
+        quantity: item.quantity + 1,
+        totalPrice: unitPrice * (item.quantity + 1)
+      };
+      setCartItems(updated);
     } else {
       // 새 아이템 추가
       const newItem: CartItem = {
@@ -145,11 +149,6 @@ function App() {
       };
       setCartItems([...cartItems, newItem]);
     }
-  };
-
-  // 장바구니에서 아이템 제거
-  const removeFromCart = (productId: string) => {
-    setCartItems(cartItems.filter(item => item.productId !== productId));
   };
 
   // 주문하기
@@ -176,8 +175,8 @@ function App() {
       await orderApi.createOrder(orderData);
       
       // 장바구니 비우기
-    setCartItems([]);
-    alert('주문이 완료되었습니다!');
+      setCartItems([]);
+      alert('주문이 완료되었습니다!');
       
       // 관리자 페이지면 주문 목록 새로고침
       if (currentPage === 'admin') {
@@ -187,42 +186,6 @@ function App() {
     } catch (err) {
       console.error('주문 생성 오류:', err);
       alert(err instanceof Error ? err.message : '주문 처리 중 오류가 발생했습니다.');
-    }
-  };
-
-  // 주문 접수
-  const receiveOrder = async (orderId: number) => {
-    try {
-      await orderApi.updateOrderStatus(orderId, '제조중');
-      await loadOrders();
-      await loadOrderStats();
-    } catch (err) {
-      console.error('주문 상태 변경 오류:', err);
-      alert(err instanceof Error ? err.message : '주문 상태 변경 중 오류가 발생했습니다.');
-    }
-  };
-
-  // 제조 시작
-  const startProduction = async (orderId: number) => {
-    try {
-      await orderApi.updateOrderStatus(orderId, '제조중');
-      await loadOrders();
-      await loadOrderStats();
-    } catch (err) {
-      console.error('주문 상태 변경 오류:', err);
-      alert(err instanceof Error ? err.message : '주문 상태 변경 중 오류가 발생했습니다.');
-    }
-  };
-
-  // 제조 완료
-  const completeOrder = async (orderId: number) => {
-    try {
-      await orderApi.updateOrderStatus(orderId, '완료');
-      await loadOrders();
-      await loadOrderStats();
-    } catch (err) {
-      console.error('주문 상태 변경 오류:', err);
-      alert(err instanceof Error ? err.message : '주문 상태 변경 중 오류가 발생했습니다.');
     }
   };
 
@@ -252,29 +215,35 @@ function App() {
             
             {!loading && !error && (
               <>
-            <div className="products-grid">
+                <div className="products-grid">
                   {menus.map((menu) => (
-              <ProductCard 
+                    <ProductCard 
                       key={menu.id}
                       product={menu}
-                onAddToCart={addToCart}
-              />
+                      onAddToCart={addToCart}
+                    />
                   ))}
                 </div>
                 
                 <Cart
                   items={cartItems}
-                  onRemoveItem={removeFromCart}
-                  onUpdateQuantity={(productId, quantity) => {
-                    if (quantity <= 0) {
-                      removeFromCart(productId);
-                    } else {
-                      setCartItems(cartItems.map(item =>
-                        item.productId === productId
-                          ? { ...item, quantity, totalPrice: (item.totalPrice / item.quantity) * quantity }
-                          : item
-                      ));
-                    }
+                  onRemoveItem={({ index }) => {
+                    setCartItems(prev => prev.filter((_, i) => i !== index));
+                  }}
+                  onUpdateQuantity={({ index, quantity }) => {
+                    setCartItems(prev => {
+                      if (index < 0 || index >= prev.length) return prev;
+                      if (quantity <= 0) return prev.filter((_, i) => i !== index);
+                      const current = prev[index];
+                      const unitPrice = current.totalPrice / current.quantity;
+                      const updated = [...prev];
+                      updated[index] = {
+                        ...current,
+                        quantity,
+                        totalPrice: unitPrice * quantity
+                      };
+                      return updated;
+                    });
                   }}
                   onPlaceOrder={placeOrder}
                 />
@@ -287,9 +256,9 @@ function App() {
             inventory={inventory}
             menus={menus}
             orderStats={orderStats}
-            onReceiveOrder={receiveOrder}
-            onStartProduction={startProduction}
-            onCompleteOrder={completeOrder}
+            onReceiveOrder={async (orderId: number) => { await orderApi.updateOrderStatus(orderId, '제조중'); await loadOrders(); await loadOrderStats(); }}
+            onStartProduction={async (orderId: number) => { await orderApi.updateOrderStatus(orderId, '제조중'); await loadOrders(); await loadOrderStats(); }}
+            onCompleteOrder={async (orderId: number) => { await orderApi.updateOrderStatus(orderId, '완료'); await loadOrders(); await loadOrderStats(); await loadInventory(); }}
             onUpdateInventory={updateInventory}
           />
         )}
