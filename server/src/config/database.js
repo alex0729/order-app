@@ -10,12 +10,19 @@ console.log('🔍 Database connection config:', {
   password: process.env.DB_PASSWORD ? '***' : 'empty'
 });
 
+// SSL 설정: Render나 원격 데이터베이스인 경우 SSL 필요
+const isLocalhost = process.env.DB_HOST === 'localhost' || process.env.DB_HOST === '127.0.0.1';
+const sslConfig = !isLocalhost ? {
+  rejectUnauthorized: false // Render PostgreSQL은 자체 서명 인증서 사용
+} : false;
+
 const pool = new Pool({
   host: process.env.DB_HOST || 'localhost',
   port: parseInt(process.env.DB_PORT) || 5432,
   database: process.env.DB_NAME || 'coffee_order_db',
   user: process.env.DB_USER || 'postgres',
   password: process.env.DB_PASSWORD || '',
+  ssl: sslConfig,
   max: 20, // 최대 연결 수
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 2000,

@@ -2,6 +2,12 @@ const { Pool } = require('pg');
 require('dotenv').config();
 
 const createDatabase = async () => {
+  // SSL 설정: Render나 원격 데이터베이스인 경우 SSL 필요
+  const isLocalhost = process.env.DB_HOST === 'localhost' || process.env.DB_HOST === '127.0.0.1';
+  const sslConfig = !isLocalhost ? {
+    rejectUnauthorized: false // Render PostgreSQL은 자체 서명 인증서 사용
+  } : false;
+
   // 먼저 postgres 데이터베이스에 연결
   const adminPool = new Pool({
     host: process.env.DB_HOST || 'localhost',
@@ -9,6 +15,7 @@ const createDatabase = async () => {
     database: 'postgres', // 기본 postgres 데이터베이스
     user: process.env.DB_USER || 'postgres',
     password: process.env.DB_PASSWORD || '',
+    ssl: sslConfig,
   });
 
   try {
