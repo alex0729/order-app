@@ -1,5 +1,5 @@
 import React from 'react';
-import { Product, CartItem } from '../types';
+import type { Product, CartItem } from '../types';
 
 interface OrderPageProps {
   products: Product[];
@@ -14,8 +14,8 @@ const OrderPage: React.FC<OrderPageProps> = ({
   products,
   cartItems,
   onAddToCart,
-  onRemoveFromCart,
-  onUpdateQuantity,
+  onRemoveFromCart: _onRemoveFromCart,
+  onUpdateQuantity: _onUpdateQuantity,
   onPlaceOrder
 }) => {
   return (

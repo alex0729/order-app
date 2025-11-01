@@ -24,7 +24,7 @@ const AdminPage: React.FC<AdminPageProps> = ({
   menus,
   orderStats,
   onReceiveOrder,
-  onStartProduction,
+  onStartProduction: _onStartProduction,
   onCompleteOrder,
   onUpdateInventory
 }) => {
