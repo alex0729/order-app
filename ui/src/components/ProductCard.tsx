@@ -65,6 +65,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
 
   const [imageError, setImageError] = React.useState(false);
   const [imageLoading, setImageLoading] = React.useState(true);
+  const imageRef = React.useRef<HTMLImageElement>(null);
   const imagePath = getImagePath();
   
   // 이미지 경로가 변경되면 상태 초기화
@@ -72,14 +73,23 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
     setImageError(false);
     setImageLoading(true);
     
-    // 타임아웃: 2초 후 로딩 상태 해제 (이미지가 로드되지 않아도 표시 시도)
+    // 타임아웃: 500ms 후 로딩 상태 해제 (빠른 네트워크에서도 이미지가 표시되도록)
     const timeout = setTimeout(() => {
       setImageLoading(false);
-    }, 2000);
+    }, 500);
     
     return () => {
       clearTimeout(timeout);
     };
+  }, [imagePath]);
+  
+  // 이미지가 DOM에 추가된 후 로드 상태 확인
+  React.useLayoutEffect(() => {
+    if (imageRef.current) {
+      if (imageRef.current.complete && imageRef.current.naturalWidth > 0) {
+        setImageLoading(false);
+      }
+    }
   }, [imagePath]);
   
   const handleImageError = () => {
@@ -117,6 +127,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
         )}
         {!imageError ? (
           <img 
+            ref={imageRef}
             src={imagePath} 
             alt={product.name} 
             className="coffee-image"
