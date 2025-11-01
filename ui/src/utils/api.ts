@@ -1,21 +1,43 @@
 // API Base URL 설정
 const getApiBaseUrl = () => {
+  // 모든 환경 변수 로깅 (디버깅용)
+  console.log('🔍 환경 변수 확인:', {
+    VITE_API_BASE_URL: import.meta.env.VITE_API_BASE_URL,
+    MODE: import.meta.env.MODE,
+    DEV: import.meta.env.DEV,
+    PROD: import.meta.env.PROD,
+    // 모든 VITE_ 환경 변수 확인
+    envKeys: Object.keys(import.meta.env).filter(key => key.startsWith('VITE_'))
+  });
+  
   const envUrl = import.meta.env.VITE_API_BASE_URL;
-  if (envUrl) {
+  
+  if (envUrl && envUrl.trim() !== '') {
+    console.log('✅ API Base URL:', envUrl);
     return envUrl;
   }
   
   // 개발 환경 기본값
   if (import.meta.env.DEV) {
+    console.log('⚠️ 개발 환경: 기본값 사용');
     return 'http://localhost:3001/api';
   }
   
-  // 프로덕션 환경에서도 기본값 제공 (나중에 에러 처리)
-  console.warn('VITE_API_BASE_URL 환경 변수가 설정되지 않았습니다. 기본값을 사용합니다.');
-  return 'http://localhost:3001/api'; // 임시 기본값 (에러 처리는 API 호출 시점에)
+  // 프로덕션 환경에서 환경 변수가 없으면 에러
+  console.error('❌ VITE_API_BASE_URL 환경 변수가 설정되지 않았습니다.');
+  console.error('Render 대시보드에서 Environment Variables를 확인하세요.');
+  throw new Error('API URL이 설정되지 않았습니다. Render 환경 변수를 확인해주세요.');
 };
 
-const API_BASE_URL = getApiBaseUrl();
+// 런타임에 API_BASE_URL 가져오기 (에러 발생 시 대체)
+let API_BASE_URL: string;
+try {
+  API_BASE_URL = getApiBaseUrl();
+} catch (error) {
+  console.error('API URL 초기화 실패:', error);
+  // 폴백: 환경 변수가 없어도 앱은 시작되도록
+  API_BASE_URL = 'http://localhost:3001/api'; // 나중에 에러 처리
+}
 
 // API 응답 타입
 interface ApiResponse<T> {
@@ -98,7 +120,13 @@ async function request<T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<T> {
+  // API_BASE_URL이 기본값이면 에러
+  if (API_BASE_URL === 'http://localhost:3001/api' && import.meta.env.PROD) {
+    throw new Error('API URL이 설정되지 않았습니다. Render 환경 변수 VITE_API_BASE_URL을 확인해주세요.');
+  }
+  
   const url = `${API_BASE_URL}${endpoint}`;
+  console.log('📡 API 요청:', url);
   
   const config: RequestInit = {
     headers: {
