@@ -67,8 +67,23 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
   const [imageLoading, setImageLoading] = React.useState(true);
   const imagePath = getImagePath();
   
+  // 이미지 경로가 변경되면 상태 초기화
+  React.useEffect(() => {
+    setImageError(false);
+    setImageLoading(true);
+    
+    // 타임아웃: 2초 후 로딩 상태 해제 (이미지가 로드되지 않아도 표시 시도)
+    const timeout = setTimeout(() => {
+      setImageLoading(false);
+    }, 2000);
+    
+    return () => {
+      clearTimeout(timeout);
+    };
+  }, [imagePath]);
+  
   const handleImageError = () => {
-    console.warn(`이미지 로드 실패: ${imagePath}`);
+    console.warn(`이미지 표시 실패: ${imagePath}`);
     setImageError(true);
     setImageLoading(false);
   };
@@ -79,32 +94,35 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
 
   return (
     <div className="product-card">
-      <div className="product-image">
+      <div className="product-image" style={{ position: 'relative' }}>
+        {imageLoading && !imageError && (
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center', 
+            height: '100%', 
+            background: '#f0f0f0',
+            color: '#999',
+            fontSize: '0.9rem',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: 2,
+            pointerEvents: 'none'
+          }}>
+            로딩 중...
+          </div>
+        )}
         {!imageError ? (
-          <>
-            {imageLoading && (
-              <div style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center', 
-                height: '100%', 
-                background: '#f0f0f0',
-                color: '#999',
-                fontSize: '0.9rem'
-              }}>
-                로딩 중...
-              </div>
-            )}
-            <img 
-              src={imagePath} 
-              alt={product.name} 
-              className="coffee-image"
-              onError={handleImageError}
-              onLoad={handleImageLoad}
-              loading="lazy"
-              style={{ display: imageLoading ? 'none' : 'block' }}
-            />
-          </>
+          <img 
+            src={imagePath} 
+            alt={product.name} 
+            className="coffee-image"
+            onError={handleImageError}
+            onLoad={handleImageLoad}
+          />
         ) : (
           <div style={{ 
             display: 'flex', 
